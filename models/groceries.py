@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional, Union
 
 @dataclass
 class GroceryCategory:
@@ -51,6 +51,7 @@ class GroceryPrice:
 
 @dataclass
 class GroceryItem:
+    instance: Any
     id: int
     name: str
     brand: str
@@ -63,8 +64,9 @@ class GroceryItem:
     ratings: GroceryRatings
 
     @classmethod
-    def from_data(cls, data: dict) -> "GroceryItem":
+    def from_data(cls, instance: Any, data: dict) -> "GroceryItem":
         return GroceryItem(
+            instance=instance,
             id=int(data["id"]),
             name=data["name"].lower().strip(),
             brand=data["brand_name"].lower().strip(),
@@ -76,3 +78,80 @@ class GroceryItem:
             price=GroceryPrice.from_data(data),
             ratings=GroceryRatings.from_data(data["product_rating"])
         )
+    
+@dataclass
+class NutritionField:
+    name: str
+    amount: float
+    daily_amount: float
+    units: Optional[str]
+    children: list["NutritionField"]
+
+    @classmethod
+    def from_field(cls, field: dict) -> "NutritionField":
+        amt, amt_unit = field["amount"].split(" ")
+        daily = float(field["daily_value"].strip())
+        return NutritionField(
+            name=field["name"].strip(),
+            amount=float(amt),
+            daily_amount=daily,
+            units=amt_unit if len(amt_unit) > 0 else None,
+            children=[NutritionField.from_field(c) for c in field.get("children", [])]
+        )
+    
+@dataclass
+class GroceryItemNutrition:
+    serving_size: str
+    servings_per_container: str
+    fields: list[NutritionField]
+    secondary_fields: list[NutritionField]
+
+    @classmethod
+    def from_data(cls, data: dict) -> "GroceryItemNutrition":
+        return GroceryItemNutrition(
+            serving_size=data["data"]["amount"],
+            servings_per_container=data["data"]["per_container"],
+            fields=[NutritionField.from_field(f) for f in data["data"]["fields"]],
+            secondary_fields=[NutritionField.from_field(f) for f in data["data"]["secondary_fields"]]
+        )
+
+    
+@dataclass
+class GroceryItemExpanded:
+    instance: Any
+    id: int
+    name: str
+    brand: str
+    aisle: str
+    categories: list[GroceryCategory]
+    images: list[GroceryImageType]
+    tags: list[str]
+    size: Optional[str]
+    price: GroceryPrice
+    ratings: GroceryRatings
+    description: Optional[str]
+    ingredients: Optional[str]
+    instructions: Optional[str]
+    nutrition_facts: Optional[GroceryItemNutrition]
+
+    @classmethod
+    def from_data(cls, instance: Any, data: dict) -> "GroceryItemExpanded":
+        return GroceryItemExpanded(
+            instance=instance,
+            id=int(data["id"]),
+            name=data["name"].lower().strip(),
+            brand=data["brand_name"].lower().strip(),
+            aisle=data.get("aisle", "").lower().strip(),
+            categories=GroceryCategory.all_from_data(data["categories"]),
+            images=[GroceryImageType.from_data(i) for i in data.get("images", {}).values()],
+            tags=data.get("tags", []),
+            size=data.get("size_string", None),
+            price=GroceryPrice.from_data(data),
+            ratings=GroceryRatings.from_data(data["product_rating"]),
+            description=data.get("description"),
+            ingredients=data.get("ingredients"),
+            instructions=data.get("instructions"),
+            nutrition_facts=GroceryItemNutrition.from_data(data["nutrition"]) if "nutrition" in data.keys() and data["nutrition"] and "data" in data["nutrition"].keys() else None
+        )
+    
+

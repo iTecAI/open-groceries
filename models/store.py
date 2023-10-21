@@ -1,10 +1,11 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Any
 from .util import *
 
 
 @dataclass
 class Store:
+    instance: Any
     id: int
     name: str
     address: Optional[Address]
@@ -14,8 +15,9 @@ class Store:
     amenities: list[str]
 
     @classmethod
-    def from_data(cls, data: dict) -> "Store":
+    def from_data(cls, instance: Any, data: dict) -> "Store":
         return Store(
+            instance=instance,
             id=int(data.get("id", "0")),
             name=data.get("name", ""),
             address=Address.from_data(data["address"])

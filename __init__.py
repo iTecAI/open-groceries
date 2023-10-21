@@ -59,7 +59,7 @@ class Wegmans:
             raise ApiException(result)
         
         data = result.json()
-        return [Store.from_data(item) for item in data["items"]]
+        return [Store.from_data(self, item) for item in data["items"]]
     
     def set_store(self, store: Union[int, Store]):
         if type(store) == int:
@@ -77,7 +77,10 @@ class Wegmans:
             raise ApiException(result)
         
         data = result.json()
-        return [GroceryItem.from_data(item) for item in data["items"]]
+        return [GroceryItem.from_data(self, item) for item in data["items"]]
+    
+    def get_grocery_item(self, id: int):
+        pass
 
         
 
