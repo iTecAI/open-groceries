@@ -1,6 +1,8 @@
 import requests
 from dataclasses import dataclass
 from typing import Any
+from models import *
+from exceptions import *
 
 
 @dataclass
@@ -47,11 +49,16 @@ class Wegmans:
 
     def url(self, path: str):
         return self.base.rstrip("/") + "/" + path.lstrip("/")
+    
+    def stores(self) -> list[Store]:
+        result_raw = self.session.get(self.url("/api/v2/stores"))
+        if result_raw.status_code >= 300:
+            raise ApiException(result_raw)
+        
+        data = result_raw.json()
+        return [Store.from_data(item) for item in data["items"]]
 
 
 if __name__ == "__main__":
     weg = Wegmans()
-    result = weg.session.get(weg.url("/api/v2/store_products"), params={
-        "search_term": "coffee"
-    })
-    print(result.status_code, result.text)
+    print(weg.stores())
