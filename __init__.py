@@ -80,12 +80,17 @@ class Wegmans:
         return [GroceryItem.from_data(self, item) for item in data["items"]]
     
     def get_grocery_item(self, id: int):
-        pass
+        result = self.session.get(self.url(f"/api/v2/store_products/{id}"), params={"require_storeproduct": "true"})
+
+        if result.status_code >= 300:
+            raise ApiException(result)
+        
+        data = result.json()
+        return GroceryItemExpanded.from_data(self, data)
 
         
 
 
 if __name__ == "__main__":
     weg = Wegmans()
-    print(weg.stores())
-    print(weg.search_groceries("meatballs"))
+    print(weg.search_groceries("meatballs")[0].expanded)

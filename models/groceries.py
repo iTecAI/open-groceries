@@ -79,6 +79,10 @@ class GroceryItem:
             ratings=GroceryRatings.from_data(data["product_rating"])
         )
     
+    @property
+    def expanded(self) -> "GroceryItemExpanded":
+        return self.instance.get_grocery_item(self.id)
+    
 @dataclass
 class NutritionField:
     name: str
@@ -109,8 +113,8 @@ class GroceryItemNutrition:
     @classmethod
     def from_data(cls, data: dict) -> "GroceryItemNutrition":
         return GroceryItemNutrition(
-            serving_size=data["data"]["amount"],
-            servings_per_container=data["data"]["per_container"],
+            serving_size=data["data"]["amount"].strip(),
+            servings_per_container=data["data"]["per_container"].strip(),
             fields=[NutritionField.from_field(f) for f in data["data"]["fields"]],
             secondary_fields=[NutritionField.from_field(f) for f in data["data"]["secondary_fields"]]
         )
