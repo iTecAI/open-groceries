@@ -9,6 +9,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 requests = "^2.31.0"
+bs4 = "^0.0.1"
+esprima = "^4.0.1"
 
 
 [build-system]

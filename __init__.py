@@ -7,5 +7,8 @@ from adapters import *
 
 
 if __name__ == "__main__":
-    weg = Wegmans()
-    print([i.name for i in weg.search_groceries("meatballs")])
+    """weg = Wegmans()
+    print(weg.search_groceries("meatballs"))"""
+
+    costco = Costco()
+    print(costco.search_groceries("meatballs"))

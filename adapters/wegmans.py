@@ -77,7 +77,25 @@ class Wegmans(GroceryAdapter):
             raise ApiException(result)
         
         data = result.json()
-        return [GroceryItem.from_data(self, item) for item in data["items"]]
+        return [self.build_wegmans_grocery_item(item) for item in data["items"]]
+    
+    def build_wegmans_grocery_item(self, data: dict) -> GroceryItem:
+
+        return GroceryItem(
+            type="wegmans",
+            id=int(data["id"]),
+            name=data["name"].lower().strip(),
+            location=data.get("aisle").lower().strip() if data.get("aisle") else None,
+            images=list(data.get("images", {"tile": {}})["tile"].values()),
+            tags=data.get("tags", []),
+            price=data.get("base_price", 0),
+            ratings=Ratings(average=data["product_rating"]["average_rating"], count=data["product_rating"]["user_count"]),
+            metadata={
+                "brand": data.get("brand_name").lower().strip() if "brand_name" in data.keys() else None,
+                "categories": [c["name"] for c in data["categories"]],
+                "size": data.get("size_string", None)
+            }
+        )
     
     def get_grocery_item(self, id: int):
         result = self.session.get(self.url(f"/api/v2/store_products/{id}"), params={"require_storeproduct": "true"})
@@ -86,4 +104,4 @@ class Wegmans(GroceryAdapter):
             raise ApiException(result)
         
         data = result.json()
-        return GroceryItemExpanded.from_data(self, data)
+        return self.build_wegmans_grocery_item(data)
