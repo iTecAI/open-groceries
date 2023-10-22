@@ -52,22 +52,6 @@ class Wegmans(GroceryAdapter):
 
     def url(self, path: str):
         return self.base.rstrip("/") + "/" + path.lstrip("/")
-    
-    def stores(self) -> list[Store]:
-        result = self.session.get(self.url("/api/v2/stores"))
-        if result.status_code >= 300:
-            raise ApiException(result)
-        
-        data = result.json()
-        return [Store.from_data(self, item) for item in data["items"]]
-    
-    def set_store(self, store: Union[int, Store]):
-        if type(store) == int:
-            self.store = store
-        else:
-            self.store == int(store.id)
-        
-        self.session.cookies.set("wfmStoreId", str(self.store))
 
     def search_groceries(self, search: str) -> list[GroceryItem]:
         result = self.session.get(self.url("/api/v2/store_products"), params={
@@ -97,7 +81,7 @@ class Wegmans(GroceryAdapter):
             }
         )
     
-    def get_grocery_item(self, id: int):
+    def get_grocery_item(self, id: str):
         result = self.session.get(self.url(f"/api/v2/store_products/{id}"), params={"require_storeproduct": "true"})
 
         if result.status_code >= 300:

@@ -1,4 +1,4 @@
-from . import GroceryItem, Store
+from . import GroceryItem, Location
 from typing import Any
 
 class GroceryAdapter:
@@ -8,5 +8,11 @@ class GroceryAdapter:
     def search_groceries(self, search: str) -> list[GroceryItem]:
         raise NotImplementedError
     
-    def get_grocery_item(self, id: int) -> GroceryItem:
+    def get_grocery_item(self, id: str) -> GroceryItem:
+        raise NotImplementedError
+    
+    def get_locations(self, near: str) -> list[Location]:
+        raise NotImplementedError
+    
+    def set_location(self, location: str):
         raise NotImplementedError

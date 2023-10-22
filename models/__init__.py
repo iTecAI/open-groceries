@@ -1,4 +1,3 @@
-from .store import Store
+from .location import Location
 from .groceries import GroceryItem, Ratings
-from .util import *
 from .adapter import GroceryAdapter

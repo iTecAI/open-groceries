@@ -11,4 +11,5 @@ if __name__ == "__main__":
     print(weg.search_groceries("meatballs"))"""
 
     costco = Costco()
-    print(costco.search_groceries("meatballs"))
+    #print(costco.search_groceries("meatballs"))
+    print(costco.get_grocery_item("1454123"))

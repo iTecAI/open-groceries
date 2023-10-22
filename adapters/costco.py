@@ -2,6 +2,7 @@ from models import GroceryAdapter, GroceryItem, Ratings
 import requests
 from bs4 import BeautifulSoup
 import esprima
+import re
 
 
 class Costco(GroceryAdapter):
@@ -50,3 +51,24 @@ class Costco(GroceryAdapter):
             ))
         
         return results
+    
+    def get_grocery_item(self, id: str) -> GroceryItem:
+        req = self.session.get(
+            self.base_url + f"{id}.product.{id}.html"
+        )
+        soup = BeautifulSoup(req.text, features="html.parser")
+        try:
+            price = float(re.search("priceTotal\: initialize\([0-9\.]*\)", req.text)[0].split("(")[1].split(")")[0])
+        except:
+            price = 0
+        return GroceryItem(
+            type="costco",
+            id=id,
+            name=soup.select_one(".product-title").text.strip(),
+            location=None,
+            images=[soup.select_one("#initialProductImage").attrs["src"]],
+            tags=[i.text for i in soup.select(".pdp-features li")],
+            price=price,
+            ratings=None,
+            metadata={}
+        )
