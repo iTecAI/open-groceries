@@ -1,2 +1,2 @@
-# wegmans-scraper
-Scraper for Wegmans website
+# open-groceries
+Unified data acquisition across multiple grocery store sites
