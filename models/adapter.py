@@ -16,3 +16,6 @@ class GroceryAdapter:
     
     def set_location(self, location: Location):
         raise NotImplementedError
+    
+    def suggest(self, search: str) -> list[str]:
+        raise NotImplementedError

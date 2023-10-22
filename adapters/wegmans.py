@@ -7,6 +7,7 @@ from models import Location
 
 
 WG_MAP = "pk.eyJ1IjoiaW5zdGFjYXJ0IiwiYSI6ImNqcmJrZWpmYjE0YXI0M3BkZHF2MXA4eXEifQ.YLQlO13ZFAJMx6ew3rvBrw"
+WG_INSTA = "Bearer v2.2aaf35d6a9f7e4.AUjoCP_kvwWqLABrsBF8A-L6WvgCU9QKMgNLH7Jh3RQ"
 
 
 @dataclass
@@ -21,16 +22,19 @@ class Wegmans(GroceryAdapter):
         user_agent: str = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/118.0",
     ) -> None:
         self.base = "https://shop.wegmans.com"
-        self.context = self._get_session_context(user_agent, {
-            "binary": "web-ecom",
-            "binary_version": "4.33.26",
-            "is_retina": False,
-            "os_version": "Linux x86_64",
-            "pixel_density": "1.0",
-            "push_token": "",
-            "screen_height": 1080,
-            "screen_width": 1920,
-        })
+        self.context = self._get_session_context(
+            user_agent,
+            {
+                "binary": "web-ecom",
+                "binary_version": "4.33.26",
+                "is_retina": False,
+                "os_version": "Linux x86_64",
+                "pixel_density": "1.0",
+                "push_token": "",
+                "screen_height": 1080,
+                "screen_width": 1920,
+            },
+        )
         self.session = requests.Session()
         self.session.headers = {"User-Agent": self.context.user_agent}
         self.session.cookies.update(self.context.cookies)
@@ -149,13 +153,31 @@ class Wegmans(GroceryAdapter):
                     province=s["address"]["province"],
                 ),
                 phone=s.get("phone_number", ""),
-                features=[
-                    i.strip().lower()
-                    for i in s.get("amenities").split(", ")
-                ] if s.get("amenities") else [],
+                features=[i.strip().lower() for i in s.get("amenities").split(", ")]
+                if s.get("amenities")
+                else [],
             )
             for s in sorted_results
         ]
-    
+
     def set_location(self, location: Location):
         self.session.cookies.set("wfmStoreId", location.id)
+
+    def suggest(self, search: str) -> list[str]:
+        result = requests.post(
+            "https://connect.instacart.com/v2/autosuggest/autosuggestions",
+            json={"limit": 10, "query": search},
+            headers={
+                "authorization": WG_INSTA,
+                "User-Agent": self.context.user_agent,
+                "Host": "connect.instacart.com",
+                "Origin": "https://shop.wegmans.com",
+                "Referer": "https://shop.wegmans.com/"
+            },
+        )
+
+        if result.status_code >= 300:
+            raise ApiException(result)
+
+        data = result.json()
+        return [s["text"] for s in data["autosuggestions"]]

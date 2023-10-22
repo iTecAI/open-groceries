@@ -8,4 +8,5 @@ from adapters import *
 
 if __name__ == "__main__":
     weg = Wegmans()
-    print(weg.get_locations("Rochester Institute Of Technology"))
+    #print(weg.get_locations("Rochester Institute Of Technology"))
+    print(weg.suggest("pot"))
