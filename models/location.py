@@ -31,4 +31,6 @@ class Location:
     name: str
     location: LatLong
     address: Address
+    phone: str
+    features: list[str]
 

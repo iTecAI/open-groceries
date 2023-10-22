@@ -14,5 +14,5 @@ class GroceryAdapter:
     def get_locations(self, near: str) -> list[Location]:
         raise NotImplementedError
     
-    def set_location(self, location: str):
+    def set_location(self, location: Location):
         raise NotImplementedError
