@@ -2,7 +2,7 @@ from . import GroceryItem, Location
 from typing import Any
 
 class GroceryAdapter:
-    def __init__(self) -> None:
+    def __init__(self, user_agent: str = "") -> None:
         pass
     
     def search_groceries(self, search: str) -> list[GroceryItem]:
