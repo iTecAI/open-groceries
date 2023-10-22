@@ -5,6 +5,12 @@ description = "Unified data acquisition across multiple grocery store sites"
 authors = ["Dax Harris <matteovh@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+repository = "https://github.com/iTecAI/open-groceries"
+keywords = ["requests", "modular", "groceries", "web", "web scraping"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search"
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"
