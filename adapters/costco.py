@@ -1,3 +1,4 @@
+from exceptions import ApiException
 from models import GroceryAdapter, GroceryItem, Location, Ratings, LatLong, Address
 import requests
 from bs4 import BeautifulSoup
@@ -11,6 +12,8 @@ import json
 
 VE_KEY = "AoWdiSwL2YlMr-nYYLxUFEipSBsTNtYPYUIF4aIEF4S0yrbbca0I9aRMRAA7H8SS"
 ECOM_CLIENT = "45823696-9189-482d-89c3-0c067e477ea1"
+AUTOCOMPLETE_KEY = "Basic dHlwZWFoZWFkOiM+OVZBdHJBN2ImJ0A/R0hZKzIp"
+AUTOCOMPLETE_LOC = "1260-3pl,1321-wm,1508-3pl,283-wm,561-wm,725-wm,729-dz,731-wm,758-wm,759-wm,847_0-cor,847_0-cwt,847_0-edi,847_0-ehs,847_0-membership,847_0-mpt,847_0-spc,847_0-wm,847_1-edi,847_d-fis,847_lg_n1a-edi,847_NA-cor,847_NA-pharmacy,847_NA-wm,847_ss_u358-edi,847_wp_r451-edi,951-wm,952-wm,9847-wcs,729-bd,1195-wh"
 
 
 class Costco(GroceryAdapter):
@@ -144,35 +147,70 @@ class Costco(GroceryAdapter):
                 "User-Agent": self.user_agent,
                 "Host": "ecom-api.costco.com",
                 "Origin": "https://www.costco.com",
-                "Referer": "https://www.costco.com/"
-            }
+                "Referer": "https://www.costco.com/",
+            },
         )
         warehouse_data = warehouse_request.json()
-        return [Location(
-            type="costco",
-            id=w["warehouseId"],
-            name=w["name"][0]["value"],
-            location=LatLong.from_dict(w["address"]),
-            address=Address(
-                lines=[w["address"]["line1"]],
-                city=w["address"]["city"],
-                country=w["address"]["countryName"],
-                zip_code=w["address"]["postalCode"],
-                province=w["address"]["territory"]
-            ),
-            phone=w.get("phone", ""),
-            features=[s["name"][0]["value"] for s in w.get("services", [])]
-        ) for w in warehouse_data["warehouses"]]
-    
+        return [
+            Location(
+                type="costco",
+                id=w["warehouseId"],
+                name=w["name"][0]["value"],
+                location=LatLong.from_dict(w["address"]),
+                address=Address(
+                    lines=[w["address"]["line1"]],
+                    city=w["address"]["city"],
+                    country=w["address"]["countryName"],
+                    zip_code=w["address"]["postalCode"],
+                    province=w["address"]["territory"],
+                ),
+                phone=w.get("phone", ""),
+                features=[s["name"][0]["value"] for s in w.get("services", [])],
+            )
+            for w in warehouse_data["warehouses"]
+        ]
+
     def set_location(self, location: Union[Location, None]):
         if location:
             new_cookies = {
                 "invCheckCity": location.address.city,
                 "invCheckPostalCode": location.address.zip_code,
                 "invCheckStateCode": location.address.province,
-                "STORELOCATION": quote(json.dumps({"storeLocation": {"zip": location.address.zip_code, "city": location.address.city}}))
+                "STORELOCATION": quote(
+                    json.dumps(
+                        {
+                            "storeLocation": {
+                                "zip": location.address.zip_code,
+                                "city": location.address.city,
+                            }
+                        }
+                    )
+                ),
             }
             for name, value in new_cookies.items():
                 self.session.cookies.set(name, value)
         else:
             self.session.cookies.clear()
+
+    def suggest(self, search: str) -> list[str]:
+        result = requests.get(
+            "https://search.costco.com/api/apps/www_costco_com/query/www_costco_com_typeahead",
+            headers={
+                "Authorization": AUTOCOMPLETE_KEY,
+                "Host": "search.costco.com",
+                "Origin": "https://www.costco.com",
+                "Referer": "https://www.costco.com/",
+                "User-Agent": self.user_agent
+            },
+            params={
+                "q": search,
+                "loc": AUTOCOMPLETE_LOC,
+                "rowsPerGroup": 10
+            }
+        )
+
+        if result.status_code >= 300:
+            raise ApiException(result)
+        
+        data = result.json()
+        return [i["term"] for i in data["response"]["docs"] if i["type"] == "PopularSearch"]
