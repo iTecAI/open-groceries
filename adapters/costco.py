@@ -40,10 +40,10 @@ class Costco(GroceryAdapter):
             results.append(GroceryItem(
                 type="costco",
                 id=int(data_mapping["SKU"].strip("'")),
-                name=data_mapping["name"].strip("'"),
+                name=data_mapping["name"].strip("'").replace("\\", ""),
                 location=None,
-                images=[data_mapping["productImageUrl"].strip("'")],
-                tags=[i.contents[0] for i in product.select(".product-features li") if i.contents and len(i.contents) > 0],
+                images=[data_mapping["productImageUrl"].strip("'").replace("\\", "")],
+                tags=[i.contents[0].replace("\\", "") for i in product.select(".product-features li") if i.contents and len(i.contents) > 0],
                 price=float(data_mapping["priceTotal"]),
                 ratings=Ratings(average=float(metas.get("ratingValue", "0")), count=int(metas.get("reviewCount", "0"))),
                 metadata={}
