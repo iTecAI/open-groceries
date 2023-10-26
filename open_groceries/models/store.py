@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional, Any
-from .util import *
+from .location import *
 
 
 @dataclass

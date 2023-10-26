@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import Any, Union
 import requests
-from models import *
-from exceptions import *
-from models import Location
+from ..models import *
+from ..exceptions import *
+from ..models import Location
 
 
 WG_MAP = "pk.eyJ1IjoiaW5zdGFjYXJ0IiwiYSI6ImNqcmJrZWpmYjE0YXI0M3BkZHF2MXA4eXEifQ.YLQlO13ZFAJMx6ew3rvBrw"
