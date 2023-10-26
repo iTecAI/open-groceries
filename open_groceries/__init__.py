@@ -15,7 +15,7 @@ ADAPTER_MAP: dict[ADAPTER_TYPES, GroceryAdapter] = {
     "costco": Costco,
 }
 
-__all__ = ["OpenGrocery", "Wegmans", "Costco", "Location", "Address", "LatLong", "ApiException"]
+__all__ = ["OpenGrocery", "Wegmans", "Costco", "Location", "Address", "LatLong", "ApiException", "GroceryItem"]
 
 class OpenGrocery:
     def __init__(
