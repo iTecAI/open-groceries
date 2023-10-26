@@ -1,11 +1,11 @@
 from typing import Literal, Union
 from difflib import get_close_matches
 import requests
-from models import *
-from exceptions import *
-from adapters import *
+from .models import *
+from .exceptions import *
+from .adapters import *
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from adapters.wegmans import WG_MAP
+from .adapters.wegmans import WG_MAP
 
 ADAPTER_TYPES = Literal["wegmans", "costco"]
 ADAPTERS = ["wegmans", "costco"]
