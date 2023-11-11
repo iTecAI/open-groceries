@@ -7,7 +7,6 @@ from ..models import Location
 
 
 WG_MAP = "pk.eyJ1IjoiaW5zdGFjYXJ0IiwiYSI6ImNqcmJrZWpmYjE0YXI0M3BkZHF2MXA4eXEifQ.YLQlO13ZFAJMx6ew3rvBrw"
-WG_INSTA = "Bearer v2.2aaf35d6a9f7e4.AUjoCP_kvwWqLABrsBF8A-L6WvgCU9QKMgNLH7Jh3RQ"
 
 
 @dataclass
@@ -164,20 +163,12 @@ class Wegmans(GroceryAdapter):
         self.session.cookies.set("wfmStoreId", location.id)
 
     def suggest(self, search: str) -> list[str]:
-        result = requests.post(
-            "https://connect.instacart.com/v2/autosuggest/autosuggestions",
-            json={"limit": 10, "query": search},
-            headers={
-                "authorization": WG_INSTA,
-                "User-Agent": self.context.user_agent,
-                "Host": "connect.instacart.com",
-                "Origin": "https://shop.wegmans.com",
-                "Referer": "https://shop.wegmans.com/"
-            },
+        result = self.session.get(
+            self.url("/api/v2/autocomplete"), params={"search_term": search}
         )
 
         if result.status_code >= 300:
             raise ApiException(result)
 
         data = result.json()
-        return [s["text"] for s in data["autosuggestions"]]
+        return [s.replace("<strong>", "").replace("</strong>", "") for s in data["product_autocompletes"]]
