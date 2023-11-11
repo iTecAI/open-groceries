@@ -14,6 +14,7 @@ class GroceryItem:
     location: Optional[str]
     images: list[str]
     tags: list[str]
+    categories: list[str]
     price: float
     ratings: Ratings
     metadata: dict[str, Any]

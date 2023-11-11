@@ -68,10 +68,11 @@ class Costco(GroceryAdapter):
                         data_mapping["productImageUrl"].strip("'").replace("\\", "")
                     ],
                     tags=[
-                        i.contents[0].replace("\\", "")
+                        i.contents[0].replace("\\", "").strip()
                         for i in product.select(".product-features li")
                         if i.contents and len(i.contents) > 0
                     ],
+                    categories=[],
                     price=float(data_mapping["priceTotal"]),
                     ratings=Ratings(
                         average=float(metas.get("ratingValue", "0")),
@@ -86,6 +87,14 @@ class Costco(GroceryAdapter):
     def get_grocery_item(self, id: str) -> GroceryItem:
         req = self.session.get(self.base_url + f"{id}.product.{id}.html")
         soup = BeautifulSoup(req.text, features="html.parser")
+        
+        script_results = [i.text for i in soup.select("script") if "pageCrumbs" in i.text]
+        if len(script_results) > 0:
+            crumbLine = [i.strip() for i in script_results[0].split("\n") if "pageCrumbs" in i]
+            categories = json.loads(crumbLine[0].split(":")[1].strip(" ,"))
+        else:
+            categories = []
+
         try:
             price = float(
                 re.search("priceTotal\: initialize\([0-9\.]*\)", req.text)[0]
@@ -104,6 +113,7 @@ class Costco(GroceryAdapter):
             price=price,
             ratings=None,
             metadata={},
+            categories=categories
         )
 
     def get_locations(self, near: str) -> list[Location]:

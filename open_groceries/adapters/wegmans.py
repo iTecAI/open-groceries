@@ -80,11 +80,11 @@ class Wegmans(GroceryAdapter):
                 average=data["product_rating"]["average_rating"],
                 count=data["product_rating"]["user_count"],
             ),
+            categories=[c["name"] for c in data["categories"]],
             metadata={
                 "brand": data.get("brand_name").lower().strip()
                 if "brand_name" in data.keys()
                 else None,
-                "categories": [c["name"] for c in data["categories"]],
                 "size": data.get("size_string", None),
             },
         )
