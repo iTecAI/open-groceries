@@ -39,48 +39,51 @@ class Costco(GroceryAdapter):
         soup = BeautifulSoup(req.text, features="html.parser")
         results = []
         for product in soup.select(".product"):
-            data_script = product.select("script")[1]
-            sc_tokens = esprima.tokenize(data_script.contents[0])
-            data_mapping = {}
-            for token in range(len(sc_tokens)):
-                try:
-                    if (
-                        sc_tokens[token].type == "Identifier"
-                        and sc_tokens[token + 1].type == "Punctuator"
-                        and sc_tokens[token + 2].type in ["String", "Numeric"]
-                    ):
-                        data_mapping[sc_tokens[token].value] = sc_tokens[
-                            token + 2
-                        ].value
-                except:
-                    pass
+            try:
+                data_script = product.select("script")[1]
+                sc_tokens = esprima.tokenize(data_script.contents[0])
+                data_mapping = {}
+                for token in range(len(sc_tokens)):
+                    try:
+                        if (
+                            sc_tokens[token].type == "Identifier"
+                            and sc_tokens[token + 1].type == "Punctuator"
+                            and sc_tokens[token + 2].type in ["String", "Numeric"]
+                        ):
+                            data_mapping[sc_tokens[token].value] = sc_tokens[
+                                token + 2
+                            ].value
+                    except:
+                        pass
 
-            metas = {
-                i.attrs["itemprop"]: i.attrs["content"] for i in product.select("meta")
-            }
-            results.append(
-                GroceryItem(
-                    type="costco",
-                    id=int(data_mapping["SKU"].strip("'")),
-                    name=data_mapping["name"].strip("'").replace("\\", ""),
-                    location=None,
-                    images=[
-                        data_mapping["productImageUrl"].strip("'").replace("\\", "")
-                    ],
-                    tags=[
-                        i.contents[0].replace("\\", "").strip()
-                        for i in product.select(".product-features li")
-                        if i.contents and len(i.contents) > 0
-                    ],
-                    categories=[],
-                    price=float(data_mapping["priceTotal"]),
-                    ratings=Ratings(
-                        average=float(metas.get("ratingValue", "0")),
-                        count=int(metas.get("reviewCount", "0")),
-                    ),
-                    metadata={},
+                metas = {
+                    i.attrs["itemprop"]: i.attrs["content"] for i in product.select("meta")
+                }
+                results.append(
+                    GroceryItem(
+                        type="costco",
+                        id=int(data_mapping["SKU"].strip("'")),
+                        name=data_mapping["name"].strip("'").replace("\\", ""),
+                        location=None,
+                        images=[
+                            data_mapping["productImageUrl"].strip("'").replace("\\", "")
+                        ],
+                        tags=[
+                            i.contents[0].replace("\\", "").strip()
+                            for i in product.select(".product-features li")
+                            if i.contents and len(i.contents) > 0
+                        ],
+                        categories=[],
+                        price=float(data_mapping["priceTotal"]),
+                        ratings=Ratings(
+                            average=float(metas.get("ratingValue", "0")),
+                            count=int(metas.get("reviewCount", "0")),
+                        ),
+                        metadata={},
+                    )
                 )
-            )
+            except:
+                pass
 
         return results
 
