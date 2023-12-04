@@ -56,15 +56,26 @@ class Wegmans(GroceryAdapter):
     def url(self, path: str):
         return self.base.rstrip("/") + "/" + path.lstrip("/")
 
-    def search_groceries(self, search: str) -> list[GroceryItem]:
+    def search_groceries(
+        self, search: str, ignore_errors: bool = False
+    ) -> list[GroceryItem]:
         result = self.session.get(
             self.url("/api/v2/store_products"), params={"search_term": search}
         )
         if result.status_code >= 300:
             raise ApiException(result)
-
         data = result.json()
-        return [self.build_wegmans_grocery_item(item) for item in data["items"]]
+        results = []
+        for item in data["items"]:
+            if ignore_errors:
+                try:
+                    results.append(self.build_wegmans_grocery_item(item))
+                except:
+                    pass
+            else:
+                results.append(self.build_wegmans_grocery_item(item))
+
+        return results
 
     def build_wegmans_grocery_item(self, data: dict) -> GroceryItem:
         return GroceryItem(
@@ -171,4 +182,7 @@ class Wegmans(GroceryAdapter):
             raise ApiException(result)
 
         data = result.json()
-        return [s.replace("<strong>", "").replace("</strong>", "") for s in data["product_autocompletes"]]
+        return [
+            s.replace("<strong>", "").replace("</strong>", "")
+            for s in data["product_autocompletes"]
+        ]

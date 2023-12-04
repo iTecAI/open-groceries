@@ -15,7 +15,17 @@ ADAPTER_MAP: dict[ADAPTER_TYPES, GroceryAdapter] = {
     "costco": Costco,
 }
 
-__all__ = ["OpenGrocery", "Wegmans", "Costco", "Location", "Address", "LatLong", "ApiException", "GroceryItem"]
+__all__ = [
+    "OpenGrocery",
+    "Wegmans",
+    "Costco",
+    "Location",
+    "Address",
+    "LatLong",
+    "ApiException",
+    "GroceryItem",
+]
+
 
 class OpenGrocery:
     def __init__(
@@ -38,17 +48,29 @@ class OpenGrocery:
             if k in features
         }
 
-    def _execute_mass(self, func: str, include: list[ADAPTER_TYPES], *args, threads: int = 6, flatten: bool = False, **kwargs) -> list:
+    def _execute_mass(
+        self,
+        func: str,
+        include: list[ADAPTER_TYPES],
+        *args,
+        threads: int = 6,
+        flatten: bool = False,
+        **kwargs,
+    ) -> list:
         results = []
         with ThreadPoolExecutor(max_workers=threads) as executor:
-            tasks = [executor.submit(getattr(self.adapters[i], func), *args, **kwargs) for i in self.adapters.keys() if i in include]
+            tasks = [
+                executor.submit(getattr(self.adapters[i], func), *args, **kwargs)
+                for i in self.adapters.keys()
+                if i in include
+            ]
             for task in as_completed(tasks):
                 if flatten:
                     results.extend(task.result())
                 else:
                     results.append(task.result())
         return results
-    
+
     def _get_position(self, near: str) -> LatLong:
         map_result = requests.get(
             f"https://api.mapbox.com/geocoding/v5/mapbox.places/{near.lower()}.json",
@@ -69,9 +91,10 @@ class OpenGrocery:
             map_data["features"][0]["center"], longitude_first=True
         )
         return position
-        
 
-    def locations(self, near: str, include: list[ADAPTER_TYPES] = ADAPTERS) -> list[Location]:
+    def locations(
+        self, near: str, include: list[ADAPTER_TYPES] = ADAPTERS
+    ) -> list[Location]:
         """Get locations near an address, sorted by distance
 
         Args:
@@ -84,7 +107,7 @@ class OpenGrocery:
         current_position = self._get_position(near)
         results = self._execute_mass("get_locations", include, near, flatten=True)
         return sorted(results, key=lambda x: current_position.distance_to(x.location))
-    
+
     def set_nearest_stores(self, near: str, include: list[ADAPTER_TYPES] = ADAPTERS):
         """Set each adapter to the nearest store to an address
 
@@ -97,7 +120,7 @@ class OpenGrocery:
         for loc in all_near:
             if not locations.get(loc.type) and loc.type in include:
                 locations[loc.type] = loc
-        
+
         for adapter, location in locations.items():
             if self.adapters.get(adapter):
                 self.adapters[adapter].set_location(location)
@@ -112,7 +135,12 @@ class OpenGrocery:
             if self.adapters.get(adapter):
                 self.adapters[adapter].set_location(location)
 
-    def search(self, query: str, include: list[ADAPTER_TYPES] = ADAPTERS) -> list[GroceryItem]:
+    def search(
+        self,
+        query: str,
+        include: list[ADAPTER_TYPES] = ADAPTERS,
+        ignore_errors: bool = False,
+    ) -> list[GroceryItem]:
         """Search all adapters for a query
 
         Args:
@@ -122,10 +150,18 @@ class OpenGrocery:
         Returns:
             list[GroceryItem]: List of results, sorted by name similarity to query
         """
-        results: list[GroceryItem] = self._execute_mass("search_groceries", include, query, flatten=True)
-        match_order = get_close_matches(query.lower(), [i.name.lower() for i in results], n=len(results), cutoff=0)
+        results: list[GroceryItem] = self._execute_mass(
+            "search_groceries",
+            include,
+            query,
+            flatten=True,
+            ignore_errors=ignore_errors,
+        )
+        match_order = get_close_matches(
+            query.lower(), [i.name.lower() for i in results], n=len(results), cutoff=0
+        )
         return sorted(results, key=lambda x: match_order.index(x.name.lower()))
-    
+
     def adapter(self, adapter: ADAPTER_TYPES) -> Union[GroceryAdapter, None]:
         """Utility function to get a specific adapter
 
@@ -136,7 +172,7 @@ class OpenGrocery:
             Union[GroceryAdapter, None]: Adapter, or None if not initialized
         """
         return self.adapters.get(adapter)
-    
+
     def suggest(self, term: str, include: list[ADAPTER_TYPES] = ADAPTERS) -> list[str]:
         """Get autocompletion results for a search term
 
@@ -147,6 +183,10 @@ class OpenGrocery:
         Returns:
             list[str]: List of suggestions in order of similarity
         """
-        results: list[GroceryItem] = list(set(self._execute_mass("suggest", include, term, flatten=True)))
-        match_order = get_close_matches(term.lower(), [i.lower() for i in results], n=len(results), cutoff=0)
+        results: list[GroceryItem] = list(
+            set(self._execute_mass("suggest", include, term, flatten=True))
+        )
+        match_order = get_close_matches(
+            term.lower(), [i.lower() for i in results], n=len(results), cutoff=0
+        )
         return sorted(results, key=lambda x: match_order.index(x.lower()))

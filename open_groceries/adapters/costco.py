@@ -32,7 +32,9 @@ class Costco(GroceryAdapter):
         }
         self.base_url = "https://www.costco.com/"
 
-    def search_groceries(self, search: str) -> list[GroceryItem]:
+    def search_groceries(
+        self, search: str, ignore_errors: bool = False
+    ) -> list[GroceryItem]:
         req = self.session.get(
             self.base_url + "CatalogSearch", params={"dept": "All", "keyword": search}
         )
@@ -57,7 +59,8 @@ class Costco(GroceryAdapter):
                         pass
 
                 metas = {
-                    i.attrs["itemprop"]: i.attrs["content"] for i in product.select("meta")
+                    i.attrs["itemprop"]: i.attrs["content"]
+                    for i in product.select("meta")
                 }
                 results.append(
                     GroceryItem(
@@ -82,18 +85,23 @@ class Costco(GroceryAdapter):
                         metadata={},
                     )
                 )
-            except:
-                pass
+            except Exception as e:
+                if not ignore_errors:
+                    raise e
 
         return results
 
     def get_grocery_item(self, id: str) -> GroceryItem:
         req = self.session.get(self.base_url + f"{id}.product.{id}.html")
         soup = BeautifulSoup(req.text, features="html.parser")
-        
-        script_results = [i.text for i in soup.select("script") if "pageCrumbs" in i.text]
+
+        script_results = [
+            i.text for i in soup.select("script") if "pageCrumbs" in i.text
+        ]
         if len(script_results) > 0:
-            crumbLine = [i.strip() for i in script_results[0].split("\n") if "pageCrumbs" in i]
+            crumbLine = [
+                i.strip() for i in script_results[0].split("\n") if "pageCrumbs" in i
+            ]
             categories = json.loads(crumbLine[0].split(":")[1].strip(" ,"))
         else:
             categories = []
@@ -116,7 +124,7 @@ class Costco(GroceryAdapter):
             price=price,
             ratings=None,
             metadata={},
-            categories=categories
+            categories=categories,
         )
 
     def get_locations(self, near: str) -> list[Location]:
@@ -213,17 +221,15 @@ class Costco(GroceryAdapter):
                 "Host": "search.costco.com",
                 "Origin": "https://www.costco.com",
                 "Referer": "https://www.costco.com/",
-                "User-Agent": self.user_agent
+                "User-Agent": self.user_agent,
             },
-            params={
-                "q": search,
-                "loc": AUTOCOMPLETE_LOC,
-                "rowsPerGroup": 10
-            }
+            params={"q": search, "loc": AUTOCOMPLETE_LOC, "rowsPerGroup": 10},
         )
 
         if result.status_code >= 300:
             raise ApiException(result)
-        
+
         data = result.json()
-        return [i["term"] for i in data["response"]["docs"] if i["type"] == "PopularSearch"]
+        return [
+            i["term"] for i in data["response"]["docs"] if i["type"] == "PopularSearch"
+        ]
