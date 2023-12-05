@@ -1,3 +1,4 @@
+from ctypes import Union
 from dataclasses import dataclass
 from typing import Any, Optional
 
@@ -9,7 +10,7 @@ class Ratings:
 @dataclass
 class GroceryItem:
     type: str
-    id: str
+    id: Union[str, int]
     name: str
     location: Optional[str]
     images: list[str]

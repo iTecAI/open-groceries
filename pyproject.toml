@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "open-groceries"
-version = "0.3.0"
+version = "0.3.1"
 description = "Unified data acquisition across multiple grocery store sites"
 authors = ["Dax Harris <matteovh@gmail.com>"]
 license = "MIT"
